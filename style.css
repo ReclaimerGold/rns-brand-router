@@ -1,38 +1,83 @@
+.rns-brand-container {
+    max-width: 1440px;
+    margin: 0 auto; /* Center the container */
+    padding: 0 15px; /* Add some padding on the sides */
+}
+  
 .rns-brand-grid {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(2, 1fr);
-  }
-  
-  @media (min-width: 768px) {
+}
+
+@media (min-width: 768px) {
     .rns-brand-grid {
-      grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     }
-  }
-  
-  @media (min-width: 1024px) {
+}
+
+@media (min-width: 1024px) {
     .rns-brand-grid {
-      grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     }
-  }
-  
-  .rns-brand-box {
+}
+
+.rns-brand-box {
     text-align: center;
     border: 1px solid #ddd;
-    padding: 10px;
+    padding: 10px; /* Overall padding for the box content */
     background-color: #fff;
     border-radius: 8px;
     transition: box-shadow 0.3s;
-  }
-  
-  .rns-brand-box:hover {
+    /* Ensure the box is a flex container to allow its child link block to fill it */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the link block horizontally if it doesn't fill the width */
+}
+
+.rns-brand-box:hover {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  }
-  
-  .rns-brand-box img {
+}
+
+/* Style for the entire block link */
+.rns-brand-link-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes the logo wrapper to the top and title to the bottom */
+    align-items: center; /* Centers content horizontally within the link block */
+    text-decoration: none; /* Remove underline from the link */
+    color: inherit; /* Inherit color from parent for default text */
+    width: 100%; /* Make the link fill the box width */
+    height: 100%; /* Make the link fill the box height, crucial for justify-content: space-between */
+}
+
+/* New wrapper for the logo to center it vertically within its available space */
+.rns-brand-logo-wrapper {
+    display: flex;
+    justify-content: center; /* Centers the image horizontally within this wrapper */
+    align-items: center; /* Centers the image vertically within this wrapper */
+    flex-grow: 1; /* Allows this wrapper to take up all available vertical space before the title */
+    width: 100%; /* Ensure it fills the width of its parent */
+    padding: 15px 0; /* Add some vertical padding around the logo */
+}
+
+.rns-brand-box img {
     max-width: 100%;
     height: auto;
-    display: block;
-    margin: 0 auto 10px;
-  }
-  
+    display: block; /* Ensures it behaves as a block element */
+    /* No margins needed here; centering is handled by rns-brand-logo-wrapper */
+    flex-shrink: 0; /* Prevent the image from shrinking */
+}
+
+.rns-brand-title {
+    /* No need for order or margin-top: auto here because flex-grow on rns-brand-logo-wrapper
+       and justify-content: space-between on rns-brand-link-block handle placement */
+    font-weight: bold; /* Make the title stand out */
+    color: #333; /* Darker color for readability */
+    margin-top: 10px; /* Add a little space between the logo area and the title */
+}
+
+/* Ensure title color when hovered */
+.rns-brand-link-block:hover .rns-brand-title {
+    color: #0073aa; /* Example hover color for the title */
+}
