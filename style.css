@@ -1,0 +1,38 @@
+.rns-brand-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 768px) {
+    .rns-brand-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .rns-brand-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  
+  .rns-brand-box {
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    transition: box-shadow 0.3s;
+  }
+  
+  .rns-brand-box:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+  
+  .rns-brand-box img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 10px;
+  }
+  
