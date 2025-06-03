@@ -2,7 +2,7 @@
 /*
 Plugin Name: RNS Brand Router
 Description: Displays WooCommerce brands in a responsive grid filtered by brand category from the URL.
-Version: 1.0.1
+Version: 1.0.2
 Author: Ryan T. M. Reiffenberger
 */
 
@@ -93,10 +93,20 @@ function rns_brand_router_shortcode($atts) {
 
     $output = '<div class="rns-brand-grid">';
     foreach ($brands as $brand) {
-        $brand_link = get_term_link($brand);
         $thumbnail_id = get_term_meta($brand->term_id, 'thumbnail_id', true);
         $image = wp_get_attachment_image_url($thumbnail_id, 'medium');
         $product_count = isset($brand_product_counts[$brand->term_id]) ? $brand_product_counts[$brand->term_id] : 0;
+
+        // Construct the custom brand link
+        // If a brand category is specified in the URL, use it in the link.
+        // Otherwise, you might want a default or just the brand link.
+        if (!empty($brand_cat_slug)) {
+            $brand_link = home_url("/shop/brand-" . esc_attr($brand->slug) . "/prodcat-" . esc_attr($brand_cat_slug) . "/");
+        } else {
+            // Fallback: If no product category is in the URL, link directly to the brand's archive.
+            // You might want to adjust this fallback based on your preference.
+            $brand_link = get_term_link($brand);
+        }
 
         // Only display brands that have at least one product associated with them
         if ($product_count > 0 || $fetch_all_brands) { // If fetching all, we want to show all available brands regardless of this specific category
