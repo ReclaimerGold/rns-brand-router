@@ -2,7 +2,7 @@
 /*
 Plugin Name: RNS Brand Router
 Description: Displays WooCommerce brands in a responsive grid filtered by brand category from the URL.
-Version: 1.0
+Version: 1.0.1
 Author: Ryan T. M. Reiffenberger
 */
 
@@ -36,22 +36,28 @@ function rns_brand_router_shortcode($atts) {
                 'terms'    => $brand_cat_term->term_id,
             ],
         ],
+        'fields' => 'ids', // Only get product IDs for efficiency
     ];
-    $products = get_posts($product_args);
+    $product_ids_in_category = get_posts($product_args);
 
-    if (empty($products)) {
+    if (empty($product_ids_in_category)) {
         return '<p>No products found for this category.</p>';
     }
 
-    // Get brands associated with these products
-    $brand_ids = [];
-    foreach ($products as $product) {
-        $product_brands = wp_get_post_terms($product->ID, 'product_brand');
+    // Get brands associated with these products and count them
+    $brand_product_counts = [];
+    foreach ($product_ids_in_category as $product_id) {
+        $product_brands = wp_get_post_terms($product_id, 'product_brand');
         foreach ($product_brands as $brand) {
-            $brand_ids[] = $brand->term_id;
+            if (!isset($brand_product_counts[$brand->term_id])) {
+                $brand_product_counts[$brand->term_id] = 0;
+            }
+            $brand_product_counts[$brand->term_id]++;
         }
     }
-    $brand_ids = array_unique($brand_ids);
+
+    // Filter brand_ids to only include brands that actually have products in the category
+    $brand_ids = array_keys($brand_product_counts);
 
     // Fetch the brand details
     $brands = get_terms([
@@ -64,24 +70,32 @@ function rns_brand_router_shortcode($atts) {
         return '<p>No brands found for this category.</p>';
     }
 
+    // Sort brands alphabetically by name
+    usort($brands, function($a, $b) {
+        return strcmp($a->name, $b->name);
+    });
+
     $output = '<div class="rns-brand-grid">';
     foreach ($brands as $brand) {
         $brand_link = get_term_link($brand);
         $thumbnail_id = get_term_meta($brand->term_id, 'thumbnail_id', true);
         $image = wp_get_attachment_image_url($thumbnail_id, 'medium');
+        $product_count = isset($brand_product_counts[$brand->term_id]) ? $brand_product_counts[$brand->term_id] : 0;
 
         $output .= '<div class="rns-brand-box">';
-        // The entire block is now the link
         $output .= '<a href="' . esc_url($brand_link) . '" class="rns-brand-link-block">';
         
-        // Wrapper for the logo to control its centering
         $output .= '<div class="rns-brand-logo-wrapper">';
         if ($image) {
             $output .= '<img src="' . esc_url($image) . '" alt="' . esc_attr($brand->name) . '">';
         }
         $output .= '</div>'; // Close rns-brand-logo-wrapper
 
-        $output .= '<p class="rns-brand-title">' . esc_html($brand->name) . '</p>';
+        $output .= '<p class="rns-brand-title">' . esc_html($brand->name);
+        if ($product_count > 0) {
+            $output .= ' <span class="rns-brand-count">(' . $product_count . ')</span>';
+        }
+        $output .= '</p>';
         $output .= '</a>';
         $output .= '</div>';
     }
@@ -93,6 +107,6 @@ function rns_brand_router_shortcode($atts) {
 // Ensure styles are enqueued only when needed
 function rns_brand_router_styles() {
     if (! is_admin()) { // Ensures it's enqueued for frontend only
-        wp_enqueue_style('rns-brand-router-style', plugins_url('style.css', __FILE__), array(), '1.2'); // Increment version for cache busting
+        wp_enqueue_style('rns-brand-router-style', plugins_url('style.css', __FILE__), array(), '1.3'); // Increment version
     }
 }
