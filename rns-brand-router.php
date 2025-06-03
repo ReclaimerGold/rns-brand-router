@@ -14,34 +14,50 @@ function rns_brand_router_shortcode($atts) {
     // Get the brand_cat parameter from the URL
     $brand_cat_slug = isset($_GET['brand_cat']) ? sanitize_text_field($_GET['brand_cat']) : '';
 
-    // No need for brand specific taxonomy query, instead focus on product category
-    if (empty($brand_cat_slug)) {
-        return '<p>No category specified.</p>';
-    }
+    $product_ids_in_category = [];
+    $fetch_all_brands = false;
 
-    // Get term ID of the specified category
-    $brand_cat_term = get_term_by('slug', $brand_cat_slug, 'product_cat');
-    if (!$brand_cat_term) {
-        return '<p>Invalid category specified.</p>';
-    }
+    // Check if a specific brand category is requested
+    if (!empty($brand_cat_slug)) {
+        // Get term ID of the specified category
+        $brand_cat_term = get_term_by('slug', $brand_cat_slug, 'product_cat');
+        if (!$brand_cat_term) {
+            return '<p>Invalid category specified.</p>';
+        }
 
-    // Get products in the specified category
-    $product_args = [
-        'post_type' => 'product',
-        'posts_per_page' => -1,
-        'tax_query' => [
-            [
-                'taxonomy' => 'product_cat',
-                'field'    => 'id',
-                'terms'    => $brand_cat_term->term_id,
+        // Get products in the specified category
+        $product_args = [
+            'post_type' => 'product',
+            'posts_per_page' => -1,
+            'tax_query' => [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'id',
+                    'terms'    => $brand_cat_term->term_id,
+                ],
             ],
-        ],
-        'fields' => 'ids', // Only get product IDs for efficiency
-    ];
-    $product_ids_in_category = get_posts($product_args);
+            'fields' => 'ids', // Only get product IDs for efficiency
+        ];
+        $product_ids_in_category = get_posts($product_args);
 
-    if (empty($product_ids_in_category)) {
-        return '<p>No products found for this category.</p>';
+        if (empty($product_ids_in_category)) {
+            return '<p>No products found for this category.</p>';
+        }
+    } else {
+        // If no brand_cat is specified, we'll fetch all brands
+        $fetch_all_brands = true;
+        // If fetching all brands, we need to get all product IDs to count brands
+        $all_product_args = [
+            'post_type' => 'product',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'status' => 'publish' // Only get published products
+        ];
+        $product_ids_in_category = get_posts($all_product_args);
+
+        if (empty($product_ids_in_category)) {
+            return '<p>No products found on the site.</p>';
+        }
     }
 
     // Get brands associated with these products and count them
@@ -56,18 +72,18 @@ function rns_brand_router_shortcode($atts) {
         }
     }
 
-    // Filter brand_ids to only include brands that actually have products in the category
+    // Filter brand_ids to only include brands that actually have products (either in category or globally)
     $brand_ids = array_keys($brand_product_counts);
 
     // Fetch the brand details
     $brands = get_terms([
         'taxonomy' => 'product_brand',
         'include'  => $brand_ids,
-        'hide_empty' => false,
+        'hide_empty' => false, // Set to true if you only want brands with products to show when listing all
     ]);
 
     if (empty($brands) || is_wp_error($brands)) {
-        return '<p>No brands found for this category.</p>';
+        return '<p>No brands found.</p>';
     }
 
     // Sort brands alphabetically by name
@@ -82,22 +98,25 @@ function rns_brand_router_shortcode($atts) {
         $image = wp_get_attachment_image_url($thumbnail_id, 'medium');
         $product_count = isset($brand_product_counts[$brand->term_id]) ? $brand_product_counts[$brand->term_id] : 0;
 
-        $output .= '<div class="rns-brand-box">';
-        $output .= '<a href="' . esc_url($brand_link) . '" class="rns-brand-link-block">';
-        
-        $output .= '<div class="rns-brand-logo-wrapper">';
-        if ($image) {
-            $output .= '<img src="' . esc_url($image) . '" alt="' . esc_attr($brand->name) . '">';
-        }
-        $output .= '</div>'; // Close rns-brand-logo-wrapper
+        // Only display brands that have at least one product associated with them
+        if ($product_count > 0 || $fetch_all_brands) { // If fetching all, we want to show all available brands regardless of this specific category
+            $output .= '<div class="rns-brand-box">';
+            $output .= '<a href="' . esc_url($brand_link) . '" class="rns-brand-link-block">';
+            
+            $output .= '<div class="rns-brand-logo-wrapper">';
+            if ($image) {
+                $output .= '<img src="' . esc_url($image) . '" alt="' . esc_attr($brand->name) . '">';
+            }
+            $output .= '</div>'; // Close rns-brand-logo-wrapper
 
-        $output .= '<p class="rns-brand-title">' . esc_html($brand->name);
-        if ($product_count > 0) {
-            $output .= ' <span class="rns-brand-count">(' . $product_count . ')</span>';
+            $output .= '<p class="rns-brand-title">' . esc_html($brand->name);
+            if ($product_count > 0) {
+                $output .= ' <span class="rns-brand-count">(' . $product_count . ')</span>';
+            }
+            $output .= '</p>';
+            $output .= '</a>';
+            $output .= '</div>';
         }
-        $output .= '</p>';
-        $output .= '</a>';
-        $output .= '</div>';
     }
     $output .= '</div>';
     
@@ -107,6 +126,6 @@ function rns_brand_router_shortcode($atts) {
 // Ensure styles are enqueued only when needed
 function rns_brand_router_styles() {
     if (! is_admin()) { // Ensures it's enqueued for frontend only
-        wp_enqueue_style('rns-brand-router-style', plugins_url('style.css', __FILE__), array(), '1.3'); // Increment version
+        wp_enqueue_style('rns-brand-router-style', plugins_url('style.css', __FILE__), array(), '1.4'); // Increment version
     }
 }
