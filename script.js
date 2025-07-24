@@ -43,20 +43,28 @@ document.addEventListener('DOMContentLoaded', function() {
                             nonce: rns_updater_vars.nonce
                         })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
-                            alert(data.data.message);
+                            const message = data.data && data.data.message ? data.data.message : 'Update check completed.';
+                            alert(message);
                             // Refresh the page to show any new update notifications
-                            if (data.data.new_version && data.data.new_version !== rns_updater_vars.current_version) {
+                            if (data.data && data.data.new_version && data.data.new_version !== rns_updater_vars.current_version) {
                                 location.reload();
                             }
                         } else {
-                            alert(data.data.message || 'Error checking for updates.');
+                            const errorMessage = (data.data && data.data.message) ? data.data.message : 'Error checking for updates.';
+                            alert(errorMessage);
                         }
                     })
                     .catch(error => {
-                        alert('Error checking for updates: ' + error.message);
+                        console.error('Update check failed:', error);
+                        alert('Error checking for updates: ' + (error.message || 'Unknown error occurred'));
                     })
                     .finally(() => {
                         link.textContent = originalText;
