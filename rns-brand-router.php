@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: RNS Brand Router by Falls Tech
-Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top brands based on product count. As of v1.2 - Includes Automatic Updates.
-Version: 1.2.1
+Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top brands based on product count. Includes automatic updates from GitHub.
+Version: 1.3.0
 Author: Ryan T. M. Reiffenberger
 Author URI: https://www.fallstech.group
 Plugin URL: https://docs.reiffenberger.net
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('RNS_BRAND_ROUTER_VERSION', '1.2.1');
+define('RNS_BRAND_ROUTER_VERSION', '1.3.0');
 define('RNS_BRAND_ROUTER_PLUGIN_FILE', __FILE__);
 define('RNS_BRAND_ROUTER_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('RNS_BRAND_ROUTER_GITHUB_REPO', 'ReclaimerGold/rns-brand-router');
@@ -29,6 +29,37 @@ function rns_brand_router_init_updater() {
             new RNS_Brand_Router_Updater();
         }
     }
+}
+
+// Add settings link to plugin actions
+add_filter('plugin_action_links_' . RNS_BRAND_ROUTER_PLUGIN_BASENAME, 'rns_brand_router_action_links');
+function rns_brand_router_action_links($links) {
+    $settings_link = '<a href="' . admin_url('options-general.php?page=rns-brand-router-settings') . '">Settings</a>';
+    array_unshift($links, $settings_link);
+    return $links;
+}
+
+// Plugin activation hook
+register_activation_hook(__FILE__, 'rns_brand_router_activate');
+function rns_brand_router_activate() {
+    // Set default auto-update settings if they don't exist
+    if (get_option('rns_brand_router_auto_update') === false) {
+        add_option('rns_brand_router_auto_update', false); // Disabled by default for safety
+    }
+    if (get_option('rns_brand_router_auto_update_email') === false) {
+        add_option('rns_brand_router_auto_update_email', true); // Email notifications enabled by default
+    }
+}
+
+// Plugin deactivation hook
+register_deactivation_hook(__FILE__, 'rns_brand_router_deactivate');
+function rns_brand_router_deactivate() {
+    // Clean up transients
+    delete_transient('rns_brand_router_update_check');
+    
+    // Clean up version check cache
+    global $wpdb;
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%rns_brand_router_version_check_%'");
 }
 
 // Register AJAX handlers early to ensure they're available
