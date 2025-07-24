@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: RNS Brand Router
-Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top brands based on product count. As of v1.3.0 - Includes Automatic Updates.
+Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top brands based on product count. As of v1.2.0 - Includes Automatic Updates.
 Version: 1.2.0-rc1.0
 Author: Ryan T. M. Reiffenberger
 Author URI: https://www.fallstech.group
@@ -294,23 +294,6 @@ function rns_brand_router_styles() {
     if (! is_admin()) { // Ensures it's enqueued for frontend only
         wp_enqueue_style('rns-brand-router-style', plugins_url('style.css', __FILE__), array(), '1.5'); // Increment version
         wp_enqueue_script('rns-brand-router-script', plugins_url('script.js', __FILE__), array(), '1.0', true);
-    }
-}
-
-// Enqueue admin scripts for update checker
-add_action('admin_enqueue_scripts', 'rns_brand_router_admin_scripts');
-
-function rns_brand_router_admin_scripts($hook) {
-    // Only load on plugins page
-    if ($hook === 'plugins.php') {
-        wp_enqueue_script('rns-brand-router-admin', plugins_url('script.js', __FILE__), array('jquery'), '1.1', true);
-        
-        // Localize script with necessary variables
-        wp_localize_script('rns-brand-router-admin', 'rns_updater_vars', array(
-            'nonce' => wp_create_nonce('rns_check_update_nonce'),
-            'current_version' => RNS_BRAND_ROUTER_VERSION,
-            'ajaxurl' => admin_url('admin-ajax.php')
-        ));
     }
 }
 
