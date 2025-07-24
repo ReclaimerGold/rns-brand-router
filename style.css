@@ -85,3 +85,71 @@
 .rns-brand-link-block:hover .rns-brand-title {
     color: #0073aa; /* Example hover color for the title */
 }
+
+/* Brand Slider Styles */
+.rns-brand-slider-container {
+    width: 100%; /* Full width */
+    margin: 0 auto;
+    padding: 0 0px;
+    overflow: hidden;
+    position: relative;
+}
+
+.rns-brand-slider {
+    display: flex;
+    animation: slideInfinite 20s infinite linear;
+}
+
+.rns-brand-slide {
+    flex: 0 0 auto; /* Remove column constraints - let tiles size naturally */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 20px; /* 20px spacing between tiles */
+    box-sizing: border-box;
+}
+
+.rns-brand-slide-link {
+    display: block;
+    width: 200px; /* Fixed width for consistent tile sizes */
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.rns-brand-slide-link:hover {
+    transform: scale(1.05);
+}
+
+.rns-brand-slide-logo-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+    background-color: #fff;
+    border: 1px solid #d3d3d3; /* Light grey border */
+    border-radius: 20px; /* 20px radius */
+    padding: 20px;
+    /* No box-shadow */
+}
+
+.rns-brand-slide img {
+    max-width: 100%;
+    max-height: 80px;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Infinite scroll animation */
+@keyframes slideInfinite {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause animation on hover */
+.rns-brand-slider-container:hover .rns-brand-slider {
+    animation-play-state: paused;
+}
