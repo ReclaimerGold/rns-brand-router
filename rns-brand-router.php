@@ -2,7 +2,7 @@
 /*
 Plugin Name: RNS Brand Router
 Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top brands based on product count. As of v1.2.0 - Includes Automatic Updates.
-Version: 1.2.0-rc1.0
+Version: 1.2.0-rc1.1
 Author: Ryan T. M. Reiffenberger
 Author URI: https://www.fallstech.group
 Plugin URL: https://docs.reiffenberger.net
@@ -14,14 +14,31 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('RNS_BRAND_ROUTER_VERSION', '1.2.0-rc1.0');
+define('RNS_BRAND_ROUTER_VERSION', '1.2.0-rc1.1');
 define('RNS_BRAND_ROUTER_PLUGIN_FILE', __FILE__);
 define('RNS_BRAND_ROUTER_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('RNS_BRAND_ROUTER_GITHUB_REPO', 'ReclaimerGold/rns-brand-router');
 
 // Initialize the update checker
-require_once(plugin_dir_path(__FILE__) . 'includes/class-rns-updater.php');
-new RNS_Brand_Router_Updater();
+add_action('plugins_loaded', 'rns_brand_router_init_updater');
+function rns_brand_router_init_updater() {
+    $updater_file = plugin_dir_path(__FILE__) . 'includes/class-rns-updater.php';
+    if (file_exists($updater_file)) {
+        require_once($updater_file);
+        if (class_exists('RNS_Brand_Router_Updater')) {
+            new RNS_Brand_Router_Updater();
+        }
+    }
+}
+
+// Also register the AJAX handler separately to ensure it's always available
+add_action('wp_ajax_rns_dismiss_update_notice', 'rns_dismiss_update_notice_handler');
+
+function rns_dismiss_update_notice_handler() {
+    check_ajax_referer('rns_dismiss_notice', 'nonce');
+    update_option('rns_brand_router_update_notice_dismissed', true);
+    wp_die();
+}
 
 // Enqueue styles directly, not inside the shortcode function
 add_action('wp_enqueue_scripts', 'rns_brand_router_styles');

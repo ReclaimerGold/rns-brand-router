@@ -299,8 +299,11 @@ class RNS_Brand_Router_Updater {
      * Show admin notice about update checker functionality
      */
     public function update_checker_notice() {
+        if (!function_exists('get_current_screen')) {
+            return;
+        }
         $screen = get_current_screen();
-        if ($screen->id !== 'plugins') {
+        if (!$screen || $screen->id !== 'plugins') {
             return;
         }
         
@@ -327,9 +330,6 @@ class RNS_Brand_Router_Updater {
             document.getElementById("rns-update-notice").style.display = "none";
         }
         </script>';
-        
-        // Add AJAX handler for dismissing notice
-        add_action('wp_ajax_rns_dismiss_update_notice', array($this, 'dismiss_update_notice'));
     }
     
     /**
