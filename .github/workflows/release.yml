@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # Triggers on version tags like v1.0.0, v1.1.0, etc.
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
@@ -57,34 +60,14 @@ jobs:
         For detailed documentation, visit: https://docs.reiffenberger.net
         EOF
         
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      id: create_release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release with Assets
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.tag.outputs.tag }}
-        release_name: RNS Brand Router ${{ steps.tag.outputs.tag }}
+        name: RNS Brand Router ${{ steps.tag.outputs.tag }}
         body_path: release_notes.md
+        files: |
+          rns-brand-router-${{ steps.tag.outputs.tag }}.zip
         draft: false
         prerelease: false
-        
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./rns-brand-router-${{ steps.tag.outputs.tag }}.zip
-        asset_name: rns-brand-router-${{ steps.tag.outputs.tag }}.zip
-        asset_content_type: application/zip
-        
-    - name: Update latest release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./rns-brand-router-${{ steps.tag.outputs.tag }}.zip
-        asset_name: rns-brand-router-latest.zip
-        asset_content_type: application/zip
