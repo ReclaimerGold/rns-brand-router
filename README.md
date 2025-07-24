@@ -8,6 +8,8 @@ RNS Brand Router is a powerful WordPress plugin designed for WooCommerce stores 
 
 ## Features
 
+### Core Features
+
 ### 🎯 **Dual Display Modes**
 - **Grid Layout**: Responsive brand grid with product counts
 - **Slider Carousel**: Animated horizontal slider showcasing top brands
@@ -29,6 +31,13 @@ RNS Brand Router is a powerful WordPress plugin designed for WooCommerce stores 
 - Clean, modern design with rounded corners
 - Hover effects and smooth animations
 - Customizable via CSS
+
+### 🔄 **Automatic Updates**
+- **GitHub Integration**: Automatic update checking from the official repository
+- **WordPress Native**: Updates appear in the WordPress admin just like other plugins
+- **Manual Check**: Option to manually check for updates on the plugins page
+- **Seamless Installation**: Updates download and install through WordPress's built-in system
+- **Version Management**: Proper version comparison and changelog display
 
 ## Installation
 
@@ -167,6 +176,37 @@ rns-brand-router/
 - URL parameter filtering
 - Basic responsive design
 - Product count display
+
+## Update System
+
+RNS Brand Router includes an advanced update management system that integrates seamlessly with WordPress:
+
+### Automatic Update Checking
+- The plugin automatically checks the GitHub repository for new releases every 12 hours
+- Update notifications appear in the WordPress admin alongside other plugin updates
+- No manual intervention required for regular update checking
+
+### Manual Update Checking
+- Click "Check for Updates" on the plugins page for immediate update verification
+- Useful for testing or when you need to check updates outside the automatic schedule
+
+### Update Process
+1. **Detection**: Plugin compares current version with latest GitHub release
+2. **Notification**: Update appears in WordPress admin if newer version available
+3. **Installation**: Click "update now" to download and install via WordPress
+4. **Completion**: Plugin automatically refreshes its update cache after installation
+
+### Technical Details
+- Uses GitHub Releases API for version information
+- Supports both tagged releases and asset downloads
+- Includes changelog parsing from release notes
+- Maintains compatibility with WordPress update standards
+- Caches update information to minimize API requests
+
+### Requirements for Updates
+- WordPress site must have internet connectivity
+- GitHub repository must be publicly accessible
+- Plugin must have proper write permissions for automatic updates
 
 ## Support
 
