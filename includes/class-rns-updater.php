@@ -39,7 +39,11 @@ class RNS_Brand_Router_Updater {
         
         // Add update checker to admin
         add_action('admin_init', array($this, 'admin_init'));
-        add_action('wp_ajax_rns_check_update', array($this, 'ajax_check_update'));
+        
+        // Only register AJAX handler if not already registered
+        if (!has_action('wp_ajax_rns_check_update')) {
+            add_action('wp_ajax_rns_check_update', array($this, 'ajax_check_update'));
+        }
         
         // Show admin notice about update checker
         add_action('admin_notices', array($this, 'update_checker_notice'));
@@ -105,7 +109,14 @@ class RNS_Brand_Router_Updater {
             )
         ));
         
-        if (is_wp_error($request) || wp_remote_retrieve_response_code($request) !== 200) {
+        if (is_wp_error($request)) {
+            error_log('RNS Brand Router Update Check Error: ' . $request->get_error_message());
+            return false;
+        }
+        
+        $response_code = wp_remote_retrieve_response_code($request);
+        if ($response_code !== 200) {
+            error_log('RNS Brand Router Update Check Error: HTTP ' . $response_code . ' - ' . wp_remote_retrieve_response_message($request));
             return false;
         }
         
@@ -113,6 +124,7 @@ class RNS_Brand_Router_Updater {
         $data = json_decode($body, true);
         
         if (empty($data) || !isset($data['tag_name'])) {
+            error_log('RNS Brand Router Update Check Error: Invalid response data');
             return false;
         }
         
@@ -264,10 +276,19 @@ class RNS_Brand_Router_Updater {
      * AJAX handler for manual update check
      */
     public function ajax_check_update() {
-        check_ajax_referer('rns_check_update_nonce', 'nonce');
+        // Verify nonce
+        if (!check_ajax_referer('rns_check_update_nonce', 'nonce', false)) {
+            wp_send_json_error(array(
+                'message' => 'Security check failed. Please refresh the page and try again.'
+            ));
+            return;
+        }
         
         if (!current_user_can('update_plugins')) {
-            wp_die(__('You do not have sufficient permissions to update plugins.'));
+            wp_send_json_error(array(
+                'message' => 'You do not have sufficient permissions to update plugins.'
+            ));
+            return;
         }
         
         // Clear cache and force check
@@ -279,18 +300,18 @@ class RNS_Brand_Router_Updater {
             
             if (version_compare($this->version, $version_info['new_version'], '<')) {
                 wp_send_json_success(array(
-                    'message' => sprintf(__('Update available: version %s'), $version_info['new_version']),
+                    'message' => sprintf('Update available: version %s', $version_info['new_version']),
                     'new_version' => $version_info['new_version']
                 ));
             } else {
                 wp_send_json_success(array(
-                    'message' => __('You have the latest version.'),
+                    'message' => 'You have the latest version.',
                     'new_version' => $this->version
                 ));
             }
         } else {
             wp_send_json_error(array(
-                'message' => __('Unable to check for updates. Please try again later.')
+                'message' => 'Unable to check for updates. Please check the error log for details.'
             ));
         }
     }

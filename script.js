@@ -45,7 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Network response was not ok: ' + response.status);
+                            // Log more details about the error
+                            console.error('Update check failed with status:', response.status, response.statusText);
+                            return response.text().then(text => {
+                                console.error('Response body:', text);
+                                throw new Error('Network response was not ok: ' + response.status + ' - ' + text.substring(0, 100));
+                            });
                         }
                         return response.json();
                     })

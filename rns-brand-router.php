@@ -19,8 +19,8 @@ define('RNS_BRAND_ROUTER_PLUGIN_FILE', __FILE__);
 define('RNS_BRAND_ROUTER_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('RNS_BRAND_ROUTER_GITHUB_REPO', 'ReclaimerGold/rns-brand-router');
 
-// Initialize the update checker
-add_action('plugins_loaded', 'rns_brand_router_init_updater');
+// Initialize the update checker - load early to ensure AJAX handlers are registered
+add_action('init', 'rns_brand_router_init_updater');
 function rns_brand_router_init_updater() {
     $updater_file = plugin_dir_path(__FILE__) . 'includes/class-rns-updater.php';
     if (file_exists($updater_file)) {
@@ -31,13 +31,39 @@ function rns_brand_router_init_updater() {
     }
 }
 
-// Also register the AJAX handler separately to ensure it's always available
+// Register AJAX handlers early to ensure they're available
 add_action('wp_ajax_rns_dismiss_update_notice', 'rns_dismiss_update_notice_handler');
+add_action('wp_ajax_rns_check_update', 'rns_check_update_fallback_handler');
 
 function rns_dismiss_update_notice_handler() {
     check_ajax_referer('rns_dismiss_notice', 'nonce');
     update_option('rns_brand_router_update_notice_dismissed', true);
     wp_die();
+}
+
+function rns_check_update_fallback_handler() {
+    // This ensures the AJAX endpoint is available even if the class isn't loaded yet
+    // The actual handler will be in the updater class
+    check_ajax_referer('rns_check_update_nonce', 'nonce');
+    
+    if (!current_user_can('update_plugins')) {
+        wp_send_json_error(array('message' => 'You do not have sufficient permissions to update plugins.'));
+        return;
+    }
+    
+    // Try to initialize the updater if not already done
+    rns_brand_router_init_updater();
+    
+    // Check if the updater class exists and has the method
+    if (class_exists('RNS_Brand_Router_Updater')) {
+        $updater = new RNS_Brand_Router_Updater();
+        if (method_exists($updater, 'ajax_check_update')) {
+            $updater->ajax_check_update();
+            return;
+        }
+    }
+    
+    wp_send_json_error(array('message' => 'Update checker is not available.'));
 }
 
 // Enqueue styles directly, not inside the shortcode function
