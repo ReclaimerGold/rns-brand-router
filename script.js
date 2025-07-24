@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Update checker functionality for admin pages
-    if (typeof ajaxurl !== 'undefined') {
+    if (typeof ajaxurl !== 'undefined' && typeof rns_updater_vars !== 'undefined') {
         // Add manual update check button to plugin row
         const pluginRow = document.querySelector('[data-plugin="rns-brand-router/rns-brand-router.php"]');
         if (pluginRow) {
