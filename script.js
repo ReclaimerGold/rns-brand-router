@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 checkUpdateLink.innerHTML = ' | <a href="#" id="rns-check-update" class="rns-check-update">Check for Updates</a>';
                 actionLinks.appendChild(checkUpdateLink);
                 
+                // Add "Something not working?" support link
+                const supportLink = document.createElement('span');
+                supportLink.innerHTML = ' | <a href="mailto:support@fallstech.group?subject=RNS Brand Router Questions" class="rns-support-link" target="_blank">Something not working?</a>';
+                actionLinks.appendChild(supportLink);
+                
                 // Add click handler for manual update check
                 document.getElementById('rns-check-update').addEventListener('click', function(e) {
                     e.preventDefault();
