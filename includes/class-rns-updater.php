@@ -621,65 +621,19 @@ class RNS_Brand_Router_Updater {
     }
     
     /**
-     * Register plugin settings
+     * Register plugin settings (simplified)
      */
     public function register_settings() {
-        register_setting('rns_brand_router_settings', 'rns_brand_router_auto_update');
-        register_setting('rns_brand_router_settings', 'rns_brand_router_auto_update_email');
-        
-        add_settings_section(
-            'rns_brand_router_auto_update_section',
-            'Automatic Updates',
-            array($this, 'settings_section_callback'),
-            'rns-brand-router-settings'
-        );
-        
-        add_settings_field(
-            'rns_brand_router_auto_update',
-            'Enable Automatic Updates',
-            array($this, 'auto_update_field_callback'),
-            'rns-brand-router-settings',
-            'rns_brand_router_auto_update_section'
-        );
-        
-        add_settings_field(
-            'rns_brand_router_auto_update_email',
-            'Email Notifications',
-            array($this, 'auto_update_email_field_callback'),
-            'rns-brand-router-settings',
-            'rns_brand_router_auto_update_section'
-        );
-    }
-    
-    /**
-     * Settings section callback
-     */
-    public function settings_section_callback() {
-        echo '<p>Configure automatic update settings for the RNS Brand Router plugin. Updates are pulled from the GitHub repository.</p>';
-    }
-    
-    /**
-     * Auto-update field callback
-     */
-    public function auto_update_field_callback() {
-        $enabled = get_option('rns_brand_router_auto_update', false);
-        echo '<label>';
-        echo '<input type="checkbox" name="rns_brand_router_auto_update" value="1" ' . checked(1, $enabled, false) . ' />';
-        echo ' Enable automatic updates for RNS Brand Router';
-        echo '</label>';
-        echo '<p class="description">When enabled, the plugin will automatically update when new versions are available from GitHub.</p>';
-    }
-    
-    /**
-     * Auto-update email field callback
-     */
-    public function auto_update_email_field_callback() {
-        $enabled = get_option('rns_brand_router_auto_update_email', false);
-        echo '<label>';
-        echo '<input type="checkbox" name="rns_brand_router_auto_update_email" value="1" ' . checked(1, $enabled, false) . ' />';
-        echo ' Send email notifications about automatic updates';
-        echo '</label>';
-        echo '<p class="description">Receive email notifications when automatic updates succeed or fail.</p>';
+        // We're handling the form manually, so just register the options
+        // This ensures they're properly recognized by WordPress
+        register_setting('rns_brand_router_settings', 'rns_brand_router_auto_update', array(
+            'type' => 'boolean',
+            'default' => false
+        ));
+        register_setting('rns_brand_router_settings', 'rns_brand_router_auto_update_email', array(
+            'type' => 'boolean', 
+            'default' => false
+        ));
     }
     
     /**
@@ -692,7 +646,10 @@ class RNS_Brand_Router_Updater {
         
         // Handle form submission
         if (isset($_POST['submit'])) {
-            check_admin_referer('rns_brand_router_settings-options');
+            // Verify nonce manually since we're using a custom form
+            if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'rns_brand_router_settings-options')) {
+                wp_die('Security check failed. Please try again.');
+            }
             
             // Save settings
             update_option('rns_brand_router_auto_update', isset($_POST['rns_brand_router_auto_update']) ? 1 : 0);
@@ -716,11 +673,35 @@ class RNS_Brand_Router_Updater {
             <?php endif; ?>
             
             <form method="post" action="">
-                <?php
-                settings_fields('rns_brand_router_settings');
-                do_settings_sections('rns-brand-router-settings');
-                submit_button();
-                ?>
+                <?php wp_nonce_field('rns_brand_router_settings-options'); ?>
+                
+                <h2>Automatic Update Settings</h2>
+                <p>Configure automatic update settings for the RNS Brand Router plugin. Updates are pulled from the GitHub repository.</p>
+                
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Enable Automatic Updates</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="rns_brand_router_auto_update" value="1" <?php checked(1, get_option('rns_brand_router_auto_update', false)); ?> />
+                                Enable automatic updates for RNS Brand Router
+                            </label>
+                            <p class="description">When enabled, the plugin will automatically update when new versions are available from GitHub.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email Notifications</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="rns_brand_router_auto_update_email" value="1" <?php checked(1, get_option('rns_brand_router_auto_update_email', false)); ?> />
+                                Send email notifications about automatic updates
+                            </label>
+                            <p class="description">Receive email notifications when automatic updates succeed or fail.</p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <?php submit_button(); ?>
             </form>
             
             <div class="card">
