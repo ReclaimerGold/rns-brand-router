@@ -2,78 +2,22 @@
 /**
  * RNS Brand Router Update Checker
  * 
- * Handles automatic updates from GitHub repository and integrates with WordPress update system
- *
- * @package RNS_Brand_Router
- * @subpackage Updater
- * @since 1.2.0
- * @author Ryan T. M. Reiffenberger
+ * Checks for updates from GitHub repository and integrates with WordPress update system
  */
 
-defined('ABSPATH') || exit;
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-/**
- * Class RNS_Brand_Router_Updater
- *
- * Manages plugin updates from GitHub releases
- *
- * @since 1.2.0
- */
 class RNS_Brand_Router_Updater {
     
-    /**
-     * Plugin file path
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $plugin_file;
-    
-    /**
-     * Plugin basename
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $plugin_basename;
-    
-    /**
-     * Current plugin version
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $version;
-    
-    /**
-     * GitHub repository
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $github_repo;
-    
-    /**
-     * GitHub API URL
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $github_api_url;
-    
-    /**
-     * Transient cache key
-     *
-     * @since 1.2.0
-     * @var string
-     */
     private $transient_key;
     
-    /**
-     * Constructor
-     *
-     * @since 1.2.0
-     */
     public function __construct() {
         $this->plugin_file = RNS_BRAND_ROUTER_PLUGIN_FILE;
         $this->plugin_basename = RNS_BRAND_ROUTER_PLUGIN_BASENAME;
@@ -87,43 +31,41 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Initialize WordPress hooks
-     *
-     * @since 1.2.0
      */
     private function init_hooks() {
         add_filter('pre_set_site_transient_update_plugins', array($this, 'check_for_update'));
         add_filter('plugins_api', array($this, 'plugin_info'), 10, 3);
         add_action('upgrader_process_complete', array($this, 'purge_cache'), 10, 2);
+        
+        // Add update checker to admin
         add_action('admin_init', array($this, 'admin_init'));
         
+        // Only register AJAX handler if not already registered
         if (!has_action('wp_ajax_rns_check_update')) {
             add_action('wp_ajax_rns_check_update', array($this, 'ajax_check_update'));
         }
         
+        // Show admin notice about update checker
         add_action('admin_notices', array($this, 'update_checker_notice'));
     }
     
     /**
      * Admin initialization
-     *
-     * @since 1.2.0
      */
     public function admin_init() {
+        // Add manual update check button to plugins page
         add_action('after_plugin_row_' . $this->plugin_basename, array($this, 'show_update_row'), 10, 2);
     }
     
     /**
      * Check for plugin updates
-     *
-     * @since 1.2.0
-     * @param object $transient Update transient data
-     * @return object Modified transient data
      */
     public function check_for_update($transient) {
         if (empty($transient->checked)) {
             return $transient;
         }
         
+        // Get cached version info
         $version_info = $this->get_cached_version_info();
         
         if ($version_info === false) {
@@ -149,20 +91,14 @@ class RNS_Brand_Router_Updater {
     }
     
     /**
-     * Get cached version information
-     *
-     * @since 1.2.0
-     * @return array|false Version info array or false if not cached
+     * Get cached version info
      */
     private function get_cached_version_info() {
         return get_transient($this->transient_key);
     }
     
     /**
-     * Get remote version information from GitHub
-     *
-     * @since 1.2.0
-     * @return array|false Version info array or false on failure
+     * Get remote version from GitHub
      */
     private function get_remote_version() {
         $request = wp_remote_get($this->github_api_url . '/releases/latest', array(
@@ -192,6 +128,7 @@ class RNS_Brand_Router_Updater {
             return false;
         }
         
+        // Clean version number (remove 'v' prefix if present)
         $version = ltrim($data['tag_name'], 'v');
         
         $version_info = array(
@@ -209,12 +146,9 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Get download URL from release data
-     *
-     * @since 1.2.0
-     * @param array $release_data GitHub release data
-     * @return string Download URL
      */
     private function get_download_url($release_data) {
+        // First try to find a .zip asset
         if (isset($release_data['assets']) && is_array($release_data['assets'])) {
             foreach ($release_data['assets'] as $asset) {
                 if (strpos($asset['name'], '.zip') !== false) {
@@ -223,21 +157,19 @@ class RNS_Brand_Router_Updater {
             }
         }
         
+        // Fallback to zipball URL
         return $release_data['zipball_url'];
     }
     
     /**
      * Parse changelog from release body
-     *
-     * @since 1.2.0
-     * @param string $body Release body text
-     * @return string Formatted changelog HTML
      */
     private function parse_changelog($body) {
         if (empty($body)) {
             return 'No changelog available.';
         }
         
+        // Basic markdown to HTML conversion for display
         $changelog = nl2br(esc_html($body));
         $changelog = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $changelog);
         $changelog = preg_replace('/\*(.*?)\*/', '<em>$1</em>', $changelog);
@@ -248,12 +180,6 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Provide plugin information for the update screen
-     *
-     * @since 1.2.0
-     * @param false|object|array $false
-     * @param string $action
-     * @param object $response
-     * @return false|object Plugin information or false
      */
     public function plugin_info($false, $action, $response) {
         if ($action !== 'plugin_information') {
@@ -295,10 +221,6 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Purge update cache when plugin is updated
-     *
-     * @since 1.2.0
-     * @param object $upgrader_object
-     * @param array $options
      */
     public function purge_cache($upgrader_object, $options) {
         if ($options['action'] === 'update' && $options['type'] === 'plugin') {
@@ -310,10 +232,6 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Show update notification row in plugins page
-     *
-     * @since 1.2.0
-     * @param string $plugin_file
-     * @param array $plugin_data
      */
     public function show_update_row($plugin_file, $plugin_data) {
         if (is_multisite() && !is_main_site()) {
@@ -356,10 +274,9 @@ class RNS_Brand_Router_Updater {
     
     /**
      * AJAX handler for manual update check
-     *
-     * @since 1.2.0
      */
     public function ajax_check_update() {
+        // Verify nonce
         if (!check_ajax_referer('rns_check_update_nonce', 'nonce', false)) {
             wp_send_json_error(array(
                 'message' => 'Security check failed. Please refresh the page and try again.'
@@ -374,6 +291,7 @@ class RNS_Brand_Router_Updater {
             return;
         }
         
+        // Clear cache and force check
         delete_transient($this->transient_key);
         $version_info = $this->get_remote_version();
         
@@ -400,8 +318,6 @@ class RNS_Brand_Router_Updater {
     
     /**
      * Show admin notice about update checker functionality
-     *
-     * @since 1.2.0
      */
     public function update_checker_notice() {
         if (!function_exists('get_current_screen')) {
@@ -412,6 +328,7 @@ class RNS_Brand_Router_Updater {
             return;
         }
         
+        // Only show notice once
         if (get_option('rns_brand_router_update_notice_dismissed', false)) {
             return;
         }
@@ -438,8 +355,6 @@ class RNS_Brand_Router_Updater {
     
     /**
      * AJAX handler for dismissing update notice
-     *
-     * @since 1.2.0
      */
     public function dismiss_update_notice() {
         check_ajax_referer('rns_dismiss_notice', 'nonce');
