@@ -1,0 +1,90 @@
+name: Build and Release WordPress Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v1.1.0, etc.
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get tag name
+      id: tag
+      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Create plugin directory
+      run: |
+        mkdir -p rns-brand-router
+        
+    - name: Copy plugin files
+      run: |
+        cp rns-brand-router.php rns-brand-router/
+        cp style.css rns-brand-router/
+        cp script.js rns-brand-router/
+        cp README.md rns-brand-router/
+        
+    - name: Create zip file
+      run: |
+        zip -r rns-brand-router-${{ steps.tag.outputs.tag }}.zip rns-brand-router/
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        ## RNS Brand Router ${{ steps.tag.outputs.tag }}
+        
+        ### 📦 Installation
+        1. Download the `rns-brand-router-${{ steps.tag.outputs.tag }}.zip` file
+        2. Upload to your WordPress site via Plugins → Add New → Upload Plugin
+        3. Activate the plugin
+        
+        ### 🔗 Shortcodes
+        - `[rns_brand_router]` - Display brands in responsive grid layout
+        - `[rns_brand_slider]` - Display top brands in animated slider
+        
+        ### 🛠️ Requirements
+        - WordPress 5.0+
+        - WooCommerce 3.0+
+        - PHP 7.4+
+        - Product Brand taxonomy
+        
+        ### 📖 Documentation
+        For detailed documentation, visit: https://docs.reiffenberger.net
+        EOF
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.tag }}
+        release_name: RNS Brand Router ${{ steps.tag.outputs.tag }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./rns-brand-router-${{ steps.tag.outputs.tag }}.zip
+        asset_name: rns-brand-router-${{ steps.tag.outputs.tag }}.zip
+        asset_content_type: application/zip
+        
+    - name: Update latest release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./rns-brand-router-${{ steps.tag.outputs.tag }}.zip
+        asset_name: rns-brand-router-latest.zip
+        asset_content_type: application/zip
