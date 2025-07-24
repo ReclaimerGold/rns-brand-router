@@ -44,9 +44,12 @@ class RNS_Brand_Router_Updater {
         // Add update checker to admin
         add_action('admin_init', array($this, 'admin_init'));
         
-        // Only register AJAX handler if not already registered
+        // Register AJAX handlers
         if (!has_action('wp_ajax_rns_check_update')) {
             add_action('wp_ajax_rns_check_update', array($this, 'ajax_check_update'));
+        }
+        if (!has_action('wp_ajax_rns_dismiss_update_notice')) {
+            add_action('wp_ajax_rns_dismiss_update_notice', array($this, 'dismiss_update_notice'));
         }
         
         // Show admin notice about update checker
