@@ -2,7 +2,7 @@
 /*
 Plugin Name: RNS Brand Router
 Description: A shortcode generation tool that generates a brand page with a grid of brands, filtered by brand category from the URL. It also includes a slider for the top 12 brands based on product count.
-Version: 1.1.0
+Version: 1.1.1
 Author: Ryan T. M. Reiffenberger
 Author URI: https://www.fallstech.group
 Plugin URL: https://docs.reiffenberger.net
